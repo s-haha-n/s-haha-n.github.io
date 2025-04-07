@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Mobile Controls</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #joystick-container {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 100px;
+      height: 100px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 50%;
+      touch-action: none;
+    }
+    #joystick {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      left: 25px;
+      top: 25px;
+      touch-action: none;
+    }
+    .button {
+      position: absolute;
+      bottom: 20px;
+      width: 60px;
+      height: 60px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 50%;
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      line-height: 60px;
+      touch-action: none;
+    }
+    #buttonA { right: 100px; }
+    #buttonB { right: 20px; }
+    #minimap {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 150px;
+      height: 150px;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+  <div id="joystick-container">
+    <div id="joystick"></div>
+  </div>
+  <div id="buttonA" class="button">A</div>
+  <div id="buttonB" class="button">B</div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.152.2/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
+
