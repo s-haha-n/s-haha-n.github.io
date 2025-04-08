@@ -81,13 +81,14 @@ function animate() {
     const delta = 0.1;
     const rotationSpeed = 0.02;
 
+    /*
     if (joystickActive) {
         camera.rotation.y -= horizontalInput * rotationSpeed;
         camera.rotation.x -= verticalInput * rotationSpeed;
 
         const maxVerticalRotation = Math.PI / 2;
         camera.rotation.x = Math.max(-maxVerticalRotation, Math.min(maxVerticalRotation, camera.rotation.x));
-    }
+    }*/
 
     //direction.z = Number(moveForward) - Number(false);
     //direction.normalize();
