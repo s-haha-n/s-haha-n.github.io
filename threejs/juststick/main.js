@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 
 let moveForward = false;
+let joystickActive = false;
+let horizontalInput = 0;
+let verticalInput = 0;
+
 const direction = new THREE.Vector3();
 // Scene
 const scene = new THREE.Scene();
@@ -75,9 +79,18 @@ function animate() {
     renderer.render(scene, camera);
 
     const delta = 0.1;
+    const rotationSpeed = 0.02;
 
-    direction.z = Number(moveForward) - Number(false);
-    direction.normalize();
+    if (joystickActive) {
+        camera.rotation.y -= horizontalInput * rotationSpeed;
+        camera.rotation.x -= verticalInput * rotationSpeed;
+
+        const maxVerticalRotation = Math.PI / 2;
+        camera.rotation.x = Math.max(-maxVerticalRotation, Math.min(maxVerticalRotation, camera.rotation.x));
+    }
+
+    //direction.z = Number(moveForward) - Number(false);
+    //direction.normalize();
 
     if (moveForward) {
         // Move camera forward in the direction it's looking (ignoring vertical tilt)
@@ -117,10 +130,38 @@ window.addEventListener('resize', () => {
 const joyStickHandle = document.querySelector(".joystick-handle");
 const joyStickContainer = document.querySelector(".joystick");
 
-joyStickContainer.addEventListener("touchstart", handleJoystickStart);
+//joyStickContainer.addEventListener("touchstart", handleJoystickStart);
+//----
+joyStickContainer.addEventListener("touchstart", handleJoystickStart, { passive: true });
+joyStickContainer.addEventListener("touchmove", handleJoystickMove, { passive: true });
+joyStickContainer.addEventListener("touchend", handleJoystickEnd, { passive: true });
 
+
+document.addEventListener("touchstart", handleTouchStart, { passive: true });
+document.addEventListener("touchmove", handleTouchMove, { passive: true });
+document.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+function handleTouchStart(event) {
+    // Determine if the touch is outside the joystick; if so, handle camera rotation
+    if (!event.target.closest('.joystick')) {
+        // Initialize camera rotation handling
+    }
+}
+
+function handleTouchMove(event) {
+    // Handle camera rotation if the touch is outside the joystick
+    if (!event.target.closest('.joystick')) {
+        // Process camera rotation based on touch movement
+    }
+}
+
+function handleTouchEnd(event) {
+    // End camera rotation handling
+}
+//----
 
 function handleJoystickStart(event) {
+    joystickActive = true;
     handleJoystickMove(event);
     document.addEventListener("touchmove", handleJoystickMove);
     document.addEventListener("touchend", handleJoystickEnd);
@@ -151,8 +192,8 @@ function handleJoystickMove(event) {
     const normalizedDistance = distance2 / (height / 2);
 
     // Calculate horizontal and vertical inputs
-    const horizontalInput = Math.cos(angle2) * normalizedDistance;
-    const verticalInput = Math.sin(angle2) * normalizedDistance;
+    horizontalInput = Math.cos(angle2) * normalizedDistance;
+    verticalInput = Math.sin(angle2) * normalizedDistance;
 
     //console.log("horizontal" + horizontalInput);
     //console.log("vert" + verticalInput);
@@ -164,22 +205,30 @@ function handleJoystickMove(event) {
     //--
 }
 
-let cameraRotationX = 0;
-let cameraRotationY = 0;
+//let cameraRotationX = 0;
+//let cameraRotationY = 0;
+let cameraQuaternion = new THREE.Quaternion();
+let euler = new THREE.Euler(0, 0, 0, 'YXZ'); // 'YXZ' order allows for intuitive controls
 
 function rotateCamera(horizontalInput, verticalInput) {
     const rotationSpeed = 0.02; // Adjust rotation speed as needed
 
+    euler.y -= horizontalInput * rotationSpeed; // yaw
+    euler.x -= verticalInput * rotationSpeed; // pitch
     // Update rotation angles based on input
-    cameraRotationY -= horizontalInput * rotationSpeed;
-    cameraRotationX -= verticalInput * rotationSpeed;
+    //cameraRotationY -= horizontalInput * rotationSpeed;
+    //cameraRotationX -= verticalInput * rotationSpeed;
 
     // Clamp the vertical rotation to prevent flipping
-    const maxVerticalRotation = Math.PI / 2; // 90 degrees
-    cameraRotationX = Math.max(-maxVerticalRotation, Math.min(maxVerticalRotation, cameraRotationX));
+    const maxPitch = Math.PI / 2; // 90 degrees
+    //const maxVerticalRotation = Math.PI / 2; // 90 degrees
+    //cameraRotationX = Math.max(-maxVerticalRotation, Math.min(maxVerticalRotation, cameraRotationX));
+    euler.x = Math.max(-maxPitch, Math.min(maxPitch, euler.x));
 
     // Apply rotations to the camera
-    camera.rotation.set(cameraRotationX, cameraRotationY, 0);
+    //camera.rotation.set(cameraRotationX, cameraRotationY, 0);
+    cameraQuaternion.setFromEuler(euler);
+    camera.quaternion.copy(cameraQuaternion);
 }
 
 
@@ -214,11 +263,16 @@ function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
-function handleJoystickEnd() {
-    joyStickHandle.style.transform = "";
-    joyStickHandle.parentElement.style.transform = "";
-    document.removeEventListener("touchmove", handleJoystickMove);
-    document.removeEventListener("touchend", handleJoystickEnd);
+function handleJoystickEnd(event) {
+    if(event.touches.length === 0){
+        joystickActive = false;
+        horizontalInput = 0;
+        verticalInput = 0;
+        joyStickHandle.style.transform = "";
+        joyStickHandle.parentElement.style.transform = "";
+        document.removeEventListener("touchmove", handleJoystickMove);
+        document.removeEventListener("touchend", handleJoystickEnd);
+    }
 }
 
 
