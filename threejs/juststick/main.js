@@ -40,10 +40,10 @@ scene.add(ground);
 setupButtons();
 
 // Red cubes
-const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+const cubeGeometry = new THREE.BoxGeometry(1, 5, 1);
+const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xc70039 });
 
-for (let i = 0; i < 20; i++) {
+for (let i = 0; i < 50; i++) {
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     cube.position.set(
         Math.random() * 40 - 20,
@@ -53,6 +53,20 @@ for (let i = 0; i < 20; i++) {
     scene.add(cube);
 }
 
+// Red cubes
+const cube2Geometry = new THREE.BoxGeometry(1, 17, 1);
+const cube2Material = new THREE.MeshStandardMaterial({ color: 0xff5733 });
+
+for (let i = 0; i < 40; i++) {
+    const cube2Geometry = new THREE.BoxGeometry(1, Math.random() * 90 -20, 1);
+    const cube = new THREE.Mesh(cube2Geometry, cube2Material);
+    cube.position.set(
+        Math.random() * 100 - 50,
+        0.5,
+        Math.random() * 100 - 50
+    );
+    scene.add(cube);
+}
 function setupButtons() {
   const buttonA = document.getElementById('buttonA');
   const buttonB = document.getElementById('buttonB');
@@ -81,14 +95,17 @@ function animate() {
     const delta = 0.1;
     const rotationSpeed = 0.02;
 
-    /*
     if (joystickActive) {
+
+        rotateCamera(horizontalInput, verticalInput);
+        /*
         camera.rotation.y -= horizontalInput * rotationSpeed;
         camera.rotation.x -= verticalInput * rotationSpeed;
 
         const maxVerticalRotation = Math.PI / 2;
         camera.rotation.x = Math.max(-maxVerticalRotation, Math.min(maxVerticalRotation, camera.rotation.x));
-    }*/
+        */
+    }
 
     //direction.z = Number(moveForward) - Number(false);
     //direction.normalize();
@@ -100,7 +117,7 @@ function animate() {
         forward.y = 0; // flatten to horizontal movement
         forward.normalize();
 
-        camera.position.add(forward.multiplyScalar(2 * delta)); // 2 is speed multiplier
+        camera.position.add(forward.multiplyScalar(5 * delta)); // 2 is speed multiplier
     }
 
  //       ////
@@ -212,7 +229,7 @@ let cameraQuaternion = new THREE.Quaternion();
 let euler = new THREE.Euler(0, 0, 0, 'YXZ'); // 'YXZ' order allows for intuitive controls
 
 function rotateCamera(horizontalInput, verticalInput) {
-    const rotationSpeed = 0.02; // Adjust rotation speed as needed
+    const rotationSpeed = 0.1; // Adjust rotation speed as needed
 
     euler.y -= horizontalInput * rotationSpeed; // yaw
     euler.x -= verticalInput * rotationSpeed; // pitch
