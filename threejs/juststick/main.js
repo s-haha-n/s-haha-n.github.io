@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 let moveForward = false;
+let moveBack = false;
 let joystickActive = false;
 let horizontalInput = 0;
 let verticalInput = 0;
@@ -94,9 +95,13 @@ function setupButtons() {
   const buttonA = document.getElementById('buttonA');
   const buttonB = document.getElementById('buttonB');
 
+
   buttonA.addEventListener('pointerdown', () => {
-    //if (canJump) velocity.y += 10;
-    //canJump = false;
+    moveBack = true;
+  });
+
+  buttonA.addEventListener('pointerup', () => {
+    moveBack = false;
   });
 
   buttonB.addEventListener('pointerdown', () => {
@@ -142,6 +147,17 @@ function animate() {
 
         camera.position.add(forward.multiplyScalar(5 * delta)); // 2 is speed multiplier
     }
+
+    if (moveBack) {
+        // Move camera forward in the direction it's looking (ignoring vertical tilt)
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0; // flatten to horizontal movement
+        forward.normalize();
+
+        camera.position.add(forward.multiplyScalar(-5 * delta)); // 2 is speed multiplier
+    }
+
 
  //       ////
   //  const delta = 0.1;
