@@ -5,6 +5,11 @@ let joystickActive = false;
 let horizontalInput = 0;
 let verticalInput = 0;
 
+const settings = {
+  rotationSpeed: 0.02
+};
+
+
 const direction = new THREE.Vector3();
 // Scene
 const scene = new THREE.Scene();
@@ -67,6 +72,24 @@ for (let i = 0; i < 40; i++) {
     );
     scene.add(cube);
 }
+
+// prevent click weirdness buttons
+document.querySelectorAll('.button').forEach(btn => {
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+  btn.addEventListener('selectstart', e => e.preventDefault());
+  btn.addEventListener('dragstart', e => e.preventDefault());
+});
+// prevent click weirdness buttons
+
+
+document.getElementById('rotationSpeed').addEventListener('input', (event) => {
+  const value = parseFloat(event.target.value);
+  settings.rotationSpeed = value;
+  document.getElementById('rotationSpeedValue').textContent = value.toFixed(2);
+});
+
+
+
 function setupButtons() {
   const buttonA = document.getElementById('buttonA');
   const buttonB = document.getElementById('buttonB');
@@ -93,7 +116,7 @@ function animate() {
     renderer.render(scene, camera);
 
     const delta = 0.1;
-    const rotationSpeed = 0.02;
+    //const rotationSpeed = 0.02;
 
     if (joystickActive) {
 
@@ -229,7 +252,8 @@ let cameraQuaternion = new THREE.Quaternion();
 let euler = new THREE.Euler(0, 0, 0, 'YXZ'); // 'YXZ' order allows for intuitive controls
 
 function rotateCamera(horizontalInput, verticalInput) {
-    const rotationSpeed = 0.1; // Adjust rotation speed as needed
+    //const rotationSpeed = 0.04; // Adjust rotation speed as needed
+    const rotationSpeed = settings.rotationSpeed;
 
     euler.y -= horizontalInput * rotationSpeed; // yaw
     euler.x -= verticalInput * rotationSpeed; // pitch
