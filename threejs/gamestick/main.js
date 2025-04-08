@@ -128,7 +128,7 @@ function animate() {
   direction.z = Number(moveForward) - Number(false);
   direction.normalize();
 
-  if (moveForward) velocity.z -= direction.z * 400.0 * delta;
+  if (moveForward) velocity.z -= direction.z * 0.01 * delta;
 
   raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
   const intersections = raycaster.intersectObjects(scene.children, false);
