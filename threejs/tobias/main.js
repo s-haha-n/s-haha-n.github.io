@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'GLTFLoader';
 
 let moveForward = false;
 let moveBack = false;
@@ -7,11 +8,106 @@ let horizontalInput = 0;
 let verticalInput = 0;
 
 const settings = {
-  rotationSpeed: 0.02
+    rotationSpeed: 0.02,
+    disSpeed: 0.02
 };
 
 //---- tobias head code
+// Load the GLTF model
+// Dummy texture (1x1 white pixel) for meshes without textures
+const dummyTexture = new THREE.TextureLoader().load('./sq.jpg');
 
+const loader = new GLTFLoader();
+
+loader.load('./skull.glb', (gltf) => {
+    const skull = gltf.scene;
+
+    // OPTIONAL: find the "head" in your original model to match position/scale
+    const head = scene.getObjectByName('Head'); // Replace 'Head' with the actual name if needed
+
+    if (head) {
+        skull.position.copy(head.position);
+        skull.scale.copy(head.scale);
+        skull.rotation.copy(head.rotation); // if needed
+    } else {
+        // fallback default position
+        skull.position.set(0, 7, 0);
+        var scale = 5.2;
+        skull.scale.set(scale, scale, scale);
+    }
+
+    scene.add(skull);
+});
+
+loader.load('./tobiascubehead.glb', (gltf) => {
+    const model = gltf.scene;
+
+
+    model.traverse((child) => {
+        if (child.isMesh && child.material && child.material.isMeshStandardMaterial) {
+            const material = child.material;
+
+            material.onBeforeCompile = (shader) => {
+                // Add custom uniforms
+                shader.uniforms.uTime = { value: 0 };
+                shader.uniforms.uDissolveThreshold = { value: 0.1 };
+                shader.uniforms.uDissolveColor = { value: new THREE.Color(0x000000) };
+            
+                // Inject varying into vertex shader
+                shader.vertexShader = shader.vertexShader.replace(
+                    `#include <common>`,
+                    `#include <common>
+                    varying vec2 vUv;`
+                );
+            
+                shader.vertexShader = shader.vertexShader.replace(
+                    `#include <uv_vertex>`,
+                    `#include <uv_vertex>
+                    vUv = uv;`
+                );
+            
+                // Inject code into fragment shader
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    `#include <common>`,
+                    `#include <common>
+                    varying vec2 vUv;
+                    uniform float uTime;
+                    uniform float uDissolveThreshold;
+                    uniform vec3 uDissolveColor;
+            
+                    float random(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+                    }`
+                );
+            
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    `#include <dithering_fragment>`,
+                    `
+                    float dissolveFactor = vUv.y + sin(uTime) * 0.5;
+                    float noise = random(vUv + uTime * 0.1);
+                    
+                    if (noise < dissolveFactor - uDissolveThreshold) discard;
+            
+                    if (abs(noise - (dissolveFactor - uDissolveThreshold)) < 0.02) {
+                        gl_FragColor.rgb = mix(gl_FragColor.rgb, uDissolveColor, 0.8);
+                    }
+            
+                    #include <dithering_fragment>
+                    `
+                );
+            
+                // Store reference for updating uniforms
+                child.userData.shader = shader;
+            };
+
+
+        }
+    });
+
+    model.position.set(0, 7, 0);
+    model.scale.set(5, 5, 5);
+    scene.add(model);
+});
 //----
 
 const direction = new THREE.Vector3();
@@ -20,9 +116,8 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xdddddd);
 
 // Camera - positioned above the ground looking down slightly
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 10, 20);
-camera.lookAt(0, 0, 0);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 8, 15);
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -48,72 +143,43 @@ scene.add(ground);
 
 setupButtons();
 
-// Red cubes
-const cubeGeometry = new THREE.BoxGeometry(1, 5, 1);
-const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xc70039 });
-
-for (let i = 0; i < 50; i++) {
-    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.position.set(
-        Math.random() * 40 - 20,
-        0.5,
-        Math.random() * 40 - 20
-    );
-    scene.add(cube);
-}
-
-// Red cubes
-const cube2Geometry = new THREE.BoxGeometry(1, 17, 1);
-const cube2Material = new THREE.MeshStandardMaterial({ color: 0xff5733 });
-
-for (let i = 0; i < 40; i++) {
-    const cube2Geometry = new THREE.BoxGeometry(1, Math.random() * 90 -20, 1);
-    const cube = new THREE.Mesh(cube2Geometry, cube2Material);
-    cube.position.set(
-        Math.random() * 100 - 50,
-        0.5,
-        Math.random() * 100 - 50
-    );
-    scene.add(cube);
-}
-
 // prevent click weirdness buttons
 document.querySelectorAll('.button').forEach(btn => {
-  btn.addEventListener('contextmenu', e => e.preventDefault());
-  btn.addEventListener('selectstart', e => e.preventDefault());
-  btn.addEventListener('dragstart', e => e.preventDefault());
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+    btn.addEventListener('selectstart', e => e.preventDefault());
+    btn.addEventListener('dragstart', e => e.preventDefault());
 });
 // prevent click weirdness buttons
 
 
 document.getElementById('rotationSpeed').addEventListener('input', (event) => {
-  const value = parseFloat(event.target.value);
-  settings.rotationSpeed = value;
-  document.getElementById('rotationSpeedValue').textContent = value.toFixed(2);
+    const value = parseFloat(event.target.value);
+    settings.rotationSpeed = value;
+    document.getElementById('rotationSpeedValue').textContent = value.toFixed(2);
 });
 
 
 
 function setupButtons() {
-  const buttonA = document.getElementById('buttonA');
-  const buttonB = document.getElementById('buttonB');
+    const buttonA = document.getElementById('buttonA');
+    const buttonB = document.getElementById('buttonB');
 
 
-  buttonA.addEventListener('pointerdown', () => {
-    moveBack = true;
-  });
+    buttonA.addEventListener('pointerdown', () => {
+        moveBack = true;
+    });
 
-  buttonA.addEventListener('pointerup', () => {
-    moveBack = false;
-  });
+    buttonA.addEventListener('pointerup', () => {
+        moveBack = false;
+    });
 
-  buttonB.addEventListener('pointerdown', () => {
-    moveForward = true;
-  });
+    buttonB.addEventListener('pointerdown', () => {
+        moveForward = true;
+    });
 
-  buttonB.addEventListener('pointerup', () => {
-    moveForward = false;
-  });
+    buttonB.addEventListener('pointerup', () => {
+        moveForward = false;
+    });
 }
 
 
@@ -161,19 +227,12 @@ function animate() {
         camera.position.add(forward.multiplyScalar(-5 * delta)); // 2 is speed multiplier
     }
 
-
- //       ////
-  //  const delta = 0.1;
-
-  //  direction.z = Number(moveForward) - Number(false);
-  //  direction.normalize();
-
-  //  if (moveForward) 
-  //  {
-  //      console.log("poop");
-  //      camera.position.add(direction.z * 0.01 * delta);
-  //      //camera.position.add(velocity.clone().multiplyScalar(delta));
-  //  }
+    // Update dissolve animation
+    scene.traverse((child) => {
+        if (child.isMesh && child.userData.shader) {
+            child.userData.shader.uniforms.uTime.value = performance.now() / 1000;
+        }
+    });
 
 
 }
@@ -325,7 +384,7 @@ function clamp(value, min, max) {
 }
 
 function handleJoystickEnd(event) {
-    if(event.touches.length === 0){
+    if (event.touches.length === 0) {
         joystickActive = false;
         horizontalInput = 0;
         verticalInput = 0;
